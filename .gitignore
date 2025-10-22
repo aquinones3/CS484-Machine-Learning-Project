@@ -4,7 +4,7 @@ data/train/
 data/validation/
 data/test/
 
-#keeping small smaple + meta data
+#keeping small smaple + meta
 !data/sample/
 !data/meta/
 
