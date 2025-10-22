@@ -3,6 +3,8 @@ data/raw/
 data/train/
 data/validation/
 data/test/
+data/processed/
+data/cleaned/
 
 #keeping small smaple + meta
 !data/sample/
