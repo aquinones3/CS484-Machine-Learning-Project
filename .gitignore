@@ -1,0 +1,16 @@
+#ignoring large data
+data/raw/
+data/train/
+data/validation/
+data/test/
+
+#keeping small smaple + meta data
+!data/sample/
+!data/meta/
+
+
+#other ignores
+__pycache__/
+*.pyc
+.env
+DS_Store
