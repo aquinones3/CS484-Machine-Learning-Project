@@ -6,10 +6,6 @@ data/test/
 data/processed/
 data/cleaned/
 
-#keeping small smaple + meta
-!data/sample/
-!data/meta/
-
 
 #other ignores
 __pycache__/

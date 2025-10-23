@@ -7,7 +7,7 @@ from collections import defaultdict
 from PIL import Image, UnidentifiedImageError
 
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png"}
-DEFAULT_SPLITS = {"train", "train"}
+DEFAULT_SPLITS = {"train", "test"}
 
 cv2 = None # 
 imagehash = None # 
@@ -32,7 +32,7 @@ def blurry(pillow_image, blur_threshold): #in simple terms, sharper images will 
     return fm < blur_threshold
 
 #function to check if face is deteced in the image
-def faceValid(pillow_image, min_face=40): #using openCV's haarcascade to detect faces
+def faceValid(pillow_image, min_face=40, scaleFactor=1.1, minNeighbors=3): #using openCV's haarcascade to detect faces
     global cv2 
     if cv2 is None:
         import cv2 as _cv2 
@@ -42,7 +42,7 @@ def faceValid(pillow_image, min_face=40): #using openCV's haarcascade to detect 
     arr = np.array(pillow_image.convert("L")) #convert to grayscale
     cascade_path = os.path.join(cv2.data.haarcascades, "haarcascade_frontalface_default.xml")
     face_cascade = cv2.CascadeClassifier(cascade_path)
-    faces = face_cascade.detectMultiScale(arr, scaleFactor=1.1, minNeighbors=3, minSize=(min_face, min_face))
+    faces = face_cascade.detectMultiScale(arr, scaleFactor=scaleFactor, minNeighbors=minNeighbors, minSize=(min_face, min_face))
     return len(faces) > 0
     
 #function to check if image is duplicate using perceptual hashing
@@ -53,7 +53,8 @@ def isDuplicate(pillow_image):
         globals()["imagehash"] = _imagehash
     return imagehash.phash(pillow_image)
 
-def keepImage(img_path, min_width, min_height, blur_threshold = None, require_face = False, dedupe_set = None, dedupe_distance = 3):
+def keepImage(img_path, min_width, min_height, blur_threshold = None, require_face = False, dedupe_set = None, dedupe_distance = 3,
+              min_face=40, face_scale=1.1, face_neighbors=3):
     try: 
         im = checkOpen(img_path)
     except (UnidentifiedImageError, OSError): 
@@ -70,7 +71,7 @@ def keepImage(img_path, min_width, min_height, blur_threshold = None, require_fa
             return False, "blurry_error"
     if require_face:
         try:
-            if not faceValid(im):
+            if not faceValid(im, min_face=min_face, scaleFactor=face_scale, minNeighbors=face_neighbors):
                 return False, "no_face"
         except Exception:
             return False, "face_detection_error"
@@ -94,6 +95,7 @@ def copy_keep(src,dst):
     shutil.copy2(src,dst)
 
 def main():
+    print("Starting cleaning process...")
     parser = argparse.ArgumentParser(description="Clean FER2013 images and copy to data/cleaned/")
     parser.add_argument("--raw-dir", default="data/raw", type=str, help="Root with train/ and test/ folders")
     parser.add_argument("--out-dir", default="data/cleaned", type=str, help="Destination for cleaned dataset")
@@ -101,25 +103,37 @@ def main():
     parser.add_argument("--min-width", type=int, default=32, help="Minimum width to keep")
     parser.add_argument("--min-height", type=int, default=32, help="Minimum height to keep")
 
-    # Optional filters
+    # Optional filters, still need to work on these bc especially face will remove a lot of images
     parser.add_argument("--blur-threshold", type=float, default=None,
                         help="If set, drop images with Laplacian variance below this (requires opencv-python). Example: 80.0")
     parser.add_argument("--require-face", action="store_true",
                         help="If set, keep only images with a detectable frontal face (requires opencv-python).")
+    parser.add_argument("--min-face", type=int, default=40,
+                        help="Minimum face size in pixels passed to the detector (smaller = more sensitive).")
+    parser.add_argument("--face-scale", type=float, default=1.1,
+                        help="Scale factor for the face detector (higher = faster but coarser).")
+    parser.add_argument("--face-neighbors", type=int, default=3,
+                        help="MinNeighbors parameter for the face detector (lower = more detections, more false positives).")
     parser.add_argument("--dedupe", action="store_true",
                         help="If set, drop near-duplicates using perceptual hash (requires imagehash).")
     parser.add_argument("--dedupe-distance", type=int, default=3,
                         help="Max Hamming distance for near-duplicate detection (lower = stricter).")
 
     args = parser.parse_args()
+    print("Arguments parsed successfully")
+
+    if args.require_face:
+        print(f"Face detection parameters: min_face={args.min_face}, scale={args.face_scale}, neighbors={args.face_neighbors}")
 
     raw_root = Path(args.raw_dir)
     out_root = Path(args.out_dir)
+    print(f"Input directory: {raw_root}")
+    print(f"Output directory: {out_root}")
     out_root.mkdir(parents=True, exist_ok=True)
 
     # Stats
     kept = defaultdict(int)
-    dropped = defaultdict(lambda: defaultdict(int))  # dropped[reason][class] += 1
+    dropped = defaultdict(lambda: defaultdict(int)) # reason -> class -> count
     summary = {"splits": {}, "params": vars(args)}
 
     for split in args.splits:
@@ -130,29 +144,33 @@ def main():
             print(f"[!] Missing split folder: {split_src} (skipping)")
             continue
 
-        # optional: fresh start for the split
-        # shutil.rmtree(split_dst, ignore_errors=True)
-
-        # one dedupe set per class to avoid cross-class suppression
+        # one deupe set per class to avoid cross-class suppression
         dedupe_sets = defaultdict(set) if args.dedupe else None
 
         classes = [d for d in split_src.iterdir() if d.is_dir()]
         split_counts = {"classes": {}, "total_kept": 0, "total_dropped": 0}
 
+        print(f"\nProcessing {split} split...")
         for cls_dir in classes:
             cls_name = cls_dir.name
             images = [p for p in cls_dir.rglob("*") if p.suffix.lower() in ALLOWED_EXTENSIONS]
+            print(f"\nProcessing {cls_name} class ({len(images)} images)...")
 
             cls_kept = 0
-            for img in images:
+            for i, img in enumerate(images, 1):
+                if i % 100 == 0:
+                    print(f"Progress: {i}/{len(images)} images processed", end="\r")
                 keep, reason = keepImage(
-                    img,
-                    min_w=args.min_width,
-                    min_h=args.min_height,
-                    blur_thresh=args.blur_thresh,
+                    str(img),
+                    min_width=args.min_width,
+                    min_height=args.min_height,
+                    blur_threshold=args.blur_threshold,
                     require_face=args.require_face,
                     dedupe_set=dedupe_sets[cls_name] if dedupe_sets is not None else None,
-                    dedupe_distance=args.dedupe_distance
+                    dedupe_distance=args.dedupe_distance,
+                    min_face=args.min_face,
+                    face_scale=args.face_scale,
+                    face_neighbors=args.face_neighbors
                 )
                 if keep:
                     dst = split_dst / cls_name / img.name
@@ -168,7 +186,7 @@ def main():
             }
             split_counts["total_kept"] += cls_kept
 
-        # sum per-split drops
+        #sum split drops
         split_drops = 0
         for reason in dropped:
             split_drops += sum(v for c, v in dropped[reason].items() if c in [d.name for d in classes])
@@ -178,12 +196,15 @@ def main():
 
     # Save summary JSON
     (out_root / "clean_summary.json").write_text(json.dumps(summary, indent=2))
-    print("\n[✓] Cleaning complete. Summary saved to:", out_root / "clean_summary.json")
+    print("\n Cleaning complete. Summary saved to:", out_root / "clean_summary.json")
 
-    # Quick terminal recap
-    for split, info in summary["splits"].items():
-        print(f"\n== {split} ==")
-        print(f" kept: {info['total_kept']:,} | dropped: {info['total_dropped']:,}")
-        for cls, stats in sorted(info["classes"].items()):
-            dropped_breakdown = " ".join([f"{k}:{v}" for k, v in stats.items() if k.startswith("dropped_") and v])
-            print(f"  - {cls:10s} kept:{stats['kept']:5d} {dropped_breakdown}")
+    # print to terminal
+    #for split, info in summary["splits"].items():
+     #   print(f"\n== {split} ==")
+      #  print(f" kept: {info['total_kept']:,} | dropped: {info['total_dropped']:,}")
+       # for cls, stats in sorted(info["classes"].items()):
+        #    dropped_breakdown = " ".join([f"{k}:{v}" for k, v in stats.items() if k.startswith("dropped_") and v])
+         #   print(f"  - {cls:10s} kept:{stats['kept']:5d} {dropped_breakdown}")
+
+if __name__ == '__main__':
+    main()
