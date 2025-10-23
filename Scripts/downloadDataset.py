@@ -1,1 +1,0 @@
-## instructions on how to download the FER2013 dataset and place it in the appropriate directory structure.

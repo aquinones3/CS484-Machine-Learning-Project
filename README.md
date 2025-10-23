@@ -24,7 +24,7 @@ This project detects human emotions from facial expressions using Convolutional 
 
 ## Dataset 
 We use the [FER2013 Dataset] (https://www.kaggle.com/datasets/msambare/fer2013). 
-Download it from [Google Drive] (link below) and place it under 'data/raw'.
+Download it from [Google Drive] (link below) and place folders into respective folders in repostiory. 
 
 Google Drive Dataset Link (https://drive.google.com/drive/folders/1YF8jsAFd8G6g-6gJU4M9S_6A5ih-Djcz?usp=drive_link).
 
