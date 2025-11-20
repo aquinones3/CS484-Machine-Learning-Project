@@ -5,6 +5,9 @@ data/validation/
 data/test/
 data/processed/
 data/cleaned/
+data/processed_v2/
+data/cleaned_v2/
+data/meta/
 
 
 #other ignores
