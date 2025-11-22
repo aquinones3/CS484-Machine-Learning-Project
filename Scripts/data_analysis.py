@@ -7,8 +7,6 @@ import torch
 import matplotlib.pyplot as plt
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]   # parent of Scripts/
-
-# ---------- Optional deps ----------
 try:
     import cv2
     HAS_CV2 = True
@@ -21,7 +19,7 @@ try:
 except Exception:
     HAS_SK = False
 
-# ---- import your helpers (unchanged) ----
+# ---- import helpers ----
 from train_model import get_data, build_model
 
 # -------------------------- utils --------------------------
