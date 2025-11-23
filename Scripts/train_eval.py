@@ -92,7 +92,9 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
   
-    training, val, test, classes = get_data(args.dir, batch_size=args.batch_size)
+    data = get_data(args.dir, batch_size=args.batch_size)
+    training, val, test, classes = data[:4]   # ignore any extra values
+
 
     model = build_model(num_classes=len(classes)).to(device)
 
