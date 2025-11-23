@@ -1,4 +1,3 @@
-# analyze.py
 import os
 import csv
 import argparse
@@ -6,7 +5,7 @@ import torch
 from torch import nn
 import matplotlib.pyplot as plt
 
-# Reuse your existing helpers (unchanged)
+
 from train_model import get_data, build_model
 
 def train_one_epoch(model, data, loss_func, optimizer, device):
@@ -82,9 +81,9 @@ def write_csv(rows, outpath):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--dir", default="data/processed")  # same default as your script
+    parser.add_argument("--dir", default="data/processed")  
     parser.add_argument("--epochs", type=int, default=10)
-    parser.add_argument("--batch_size", type=int, default=32)  # same default
+    parser.add_argument("--batch_size", type=int, default=32)  
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--num_workers", type=int, default=2)
     parser.add_argument("--save_model", action="store_true")
@@ -92,7 +91,7 @@ def main():
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    # Keep your variable names exactly:
+  
     training, val, test, classes = get_data(args.dir, batch_size=args.batch_size)
 
     model = build_model(num_classes=len(classes)).to(device)
@@ -100,7 +99,6 @@ def main():
     loss_func = nn.CrossEntropyLoss()
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
 
-    # Per-epoch tracking
     train_losses, val_losses = [], []
     train_accs, val_accs = [], []
     rows = []
@@ -118,11 +116,10 @@ def main():
               f"train_loss={train_loss:.4f} val_loss={val_loss:.4f} "
               f"train_acc={train_acc:.4f} val_acc={val_acc:.4f}")
 
-    # Final test evaluation — keep your variable name test_loss
+    
     test_loss, test_acc = eval_epoch(model, test, loss_func, device)
     print(f"\nTest Loss: {test_loss:.4f} | Test Accuracy: {test_acc:.2%}")
 
-    # Save artifacts
     os.makedirs(results_dir, exist_ok=True)
     save_plots(train_losses, val_losses, train_accs, val_accs, results_dir)
     write_csv(rows, os.path.join(results_dir, "metrics.csv"))
