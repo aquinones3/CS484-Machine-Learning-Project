@@ -39,5 +39,37 @@ STEPS TO LOAD DATA
 ## Model 
 
 ## Analysis
+How to Run Training and Analysis
+
+To generate the analysis results for the Emotion Face Recognition CNN, you must first train the model and then run the analysis scripts.
+
+    1. Train the CNN model
+
+        From the project root directory, run:
+
+            python .\Scripts\train_eval.py --dir ".\data\processed" --epochs 27 --batch_size 64 --save_model
+        
+            - --dir specifies the folder containing the train/, val/, and test/ splits.
+            - --epochs controls how many training epochs are performed.
+            - --batch_size sets the mini-batch size.
+            - --save_model tells the script to save the trained weights (e.g., emotion_cnn.pt) into the results/ directory.
+        
+        After this step completes, a trained model checkpoint will be available for analysis
+    
+    2. Run the analysis on the trained model 
+
+        Once training has produced the weight file, run:
+
+            python .\Scripts\data_analysis.py --dir ".\data\processed" --out ".\results\analysis"
+
+            The analysis script will automatically locate the latest model weights, evaluate the CNN on the test set, and generate:
+
+            - Confusion matrices (counts and normalized)
+            - Per-class accuracy plots
+            - Top-k accuracy metrics
+            - Classification reports (precision, recall, F1)
+            - Dataset distribution figures and summary CSV files
+
+        All outputs are written to the results/analysis directory for use in reports and presentations.
 
 ## AddAnythingElse
