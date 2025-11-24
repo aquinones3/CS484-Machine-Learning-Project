@@ -16,7 +16,7 @@ def get_data(dir, batch_size=32, use_weighted_sampling=True):
         transforms.Grayscale(num_output_channels=1),
         transforms.Resize((48, 48)),
         transforms.RandomHorizontalFlip(p=0.5),
-        transforms.RandomRotation(degrees=15),
+        transforms.RandomRotation(degrees=10),
         transforms.RandomAffine(degrees=0, translate=(0.1, 0.1), scale=(0.9, 1.1)),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.5], std=[0.5])
@@ -79,6 +79,7 @@ def build_model(num_classes):
         nn.Conv2d(256, 512, 3, 1, 1),
         nn.BatchNorm2d(512),
         nn.ReLU(),
+        nn.Dropout(0.7),
         nn.MaxPool2d(2),
 
         nn.Flatten(),
@@ -90,14 +91,17 @@ def build_model(num_classes):
 
 def train(model, data, loss_func, optimizer, device):
     model.train()
+    total_loss = 0.0
+    correct = 0
+    total = 0
 
     for images, labels in data:
-        image = images.to(device)
-        label = labels.to(device)
+        images = images.to(device, non_blocking=True)
+        labels = labels.to(device, non_blocking=True)
 
         optimizer.zero_grad()
-        output = model(image)
-        loss = loss_func(output, label)
+        outputs = model(images)
+        loss = loss_func(outputs, labels)
         loss.backward()
         optimizer.step()
         
@@ -105,13 +109,12 @@ def train(model, data, loss_func, optimizer, device):
 
 def eval_model(model, loader, loss_func, device):
     model.eval()
-    
     with torch.no_grad():
         for imgs, labels in loader:
-            image = imgs.to(device)
-            label = labels.to(device)
-            outputs = model(image)
-            loss = loss_func(outputs, label)
+            imgs = imgs.to(device, non_blocking=True)
+            labels = labels.to(device, non_blocking=True)
+            outputs = model(imgs)
+            loss = loss_func(outputs, labels)
             
     return loss
 
