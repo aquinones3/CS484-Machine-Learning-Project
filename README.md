@@ -6,13 +6,14 @@ This project detects human emotions from facial expressions using Convolutional 
 - [Team Members](#team-members)
 - [Folder Structure](#folder-structure)
 - [Dataset](#dataset)
+- [More on Data Prep](#more-on-data-prep)
 - [Running Model](#running-model)
 - [Model](#model)
 - [Analysis](#analysis)
 - [addAnythingElse](#addanythingelse)
 
 # Team Members 
-- Name [what you worked on]
+- Andres Quinones [Data Prep]
 - Name [what you worked on]
 - Name [what you worked on]
 
@@ -33,6 +34,10 @@ STEPS TO LOAD DATA
 - Download each folder test/train/validation from google drive
 - Insert each folder into their respective folder in repository
 - The data will be saved locally on your machine and no data(test/train/validation) should be pushed to repository
+
+## More on Data Prep
+- [DATA PREPARATION GUIDE](DATA_PREP_GUIDE.MD)
+
 
 ## Running the model
 
