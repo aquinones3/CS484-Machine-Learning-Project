@@ -10,11 +10,10 @@ This project detects human emotions from facial expressions using Convolutional 
 - [Running Model](#running-model)
 - [Model](#model)
 - [Analysis](#analysis)
-- [addAnythingElse](#addanythingelse)
 
 # Team Members 
 - Andres Quinones [Data Prep]
-- Name [what you worked on]
+- Eric Mattner [Model]
 - Name [what you worked on]
 
 ## Folder Structure
@@ -41,40 +40,35 @@ STEPS TO LOAD DATA
 
 ## Running the model
 
+Steps to train the model
+
+    -From the project root directory, run: python .\Scripts\train_eval.py --dir ".\data\processed" --epochs 27 --batch_size 64 --save_model
+    - --dir specifies the folder containing the train/, val/, and test/ splits.
+    - --epochs controls how many training epochs are performed.
+    - --batch_size sets the mini-batch size.
+    - --save_model tells the script to save the trained weights (e.g., emotion_cnn.pt) into the results/ directory.
+
 ## Model 
 
+Our CNN takes a set of 48x48 grayscale images and runs them through 4 convolutional layers with a kernel size of 3, padding of 1, and stride of 1.
+These layers use ReLU activation as well as max pooling. After the final convolutional layer a dropout function is used to prevent overfitting.
+We used the adamW optimizer and cross-entropy loss function for their ease of use and mix of efficacy and performance.
+
+Our emotion recognition model is a **Convolutional Neural Network (CNN)** designed for 48×48 grayscale facial images.
+
 ## Analysis
-How to Run Training and Analysis
+How to Run Analysis
 
-To generate the analysis results for the Emotion Face Recognition CNN, you must first train the model and then run the analysis scripts.
+    -python .\Scripts\data_analysis.py --dir ".\data\processed" --out ".\results\analysis"
 
-    1. Train the CNN model
+    -The analysis script will automatically locate the latest model weights, evaluate the CNN on the test set, and generate:
 
-        From the project root directory, run:
+        - Confusion matrices (counts and normalized)
+        - Per-class accuracy plots
+        - Top-k accuracy metrics
+        - Classification reports (precision, recall, F1)
+        - Dataset distribution figures and summary CSV files
 
-            python .\Scripts\train_eval.py --dir ".\data\processed" --epochs 27 --batch_size 64 --save_model
-        
-            - --dir specifies the folder containing the train/, val/, and test/ splits.
-            - --epochs controls how many training epochs are performed.
-            - --batch_size sets the mini-batch size.
-            - --save_model tells the script to save the trained weights (e.g., emotion_cnn.pt) into the results/ directory.
-        
-        After this step completes, a trained model checkpoint will be available for analysis
-    
-    2. Run the analysis on the trained model 
-
-        Once training has produced the weight file, run:
-
-            python .\Scripts\data_analysis.py --dir ".\data\processed" --out ".\results\analysis"
-
-            The analysis script will automatically locate the latest model weights, evaluate the CNN on the test set, and generate:
-
-            - Confusion matrices (counts and normalized)
-            - Per-class accuracy plots
-            - Top-k accuracy metrics
-            - Classification reports (precision, recall, F1)
-            - Dataset distribution figures and summary CSV files
-
-        All outputs are written to the results/analysis directory for use in reports and presentations.
+    All outputs are written to the results/analysis directory for use in reports and presentations.
 
 ## AddAnythingElse
